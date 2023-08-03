@@ -1,6 +1,7 @@
 package colour
 
 import (
+	"reflect"
 	"testing"
 )
 
@@ -90,7 +91,15 @@ func TestColour_ToString(t *testing.T) {
 			name:   "WEB",
 			colour: Gray,
 			args: args{
-				format: FormatWEB,
+				format: FormatWEBRGBA,
+			},
+			want: "#808080FF",
+		},
+		{
+			name:   "WEB",
+			colour: Gray,
+			args: args{
+				format: FormatWEBRGB,
 			},
 			want: "#808080",
 		},
@@ -99,6 +108,68 @@ func TestColour_ToString(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := tt.colour.ToString(tt.args.format); got != tt.want {
 				t.Errorf("Colour.ToString() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestColour_MarshalJSON(t *testing.T) {
+	tests := []struct {
+		name    string
+		colour  Colour
+		want    []byte
+		wantErr bool
+	}{
+		{
+			name:    "Gray",
+			colour:  Gray,
+			want:    []byte(`"FF808080"`),
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.colour.MarshalJSON()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Colour.MarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Colour.MarshalJSON() = %v, want %v", string(got), string(tt.want))
+			}
+		})
+	}
+}
+
+func TestColour_UnmarshalJSON(t *testing.T) {
+	type args struct {
+		data []byte
+	}
+	tests := []struct {
+		name       string
+		colour     *Colour
+		args       args
+		wantColour Colour
+		wantErr    bool
+	}{
+		{
+			name:   "Gray",
+			colour: new(Colour),
+			args: args{
+				data: []byte(`"FF808080"`),
+			},
+			wantColour: Gray,
+			wantErr:    false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.colour.UnmarshalJSON(tt.args.data); (err != nil) != tt.wantErr {
+				t.Errorf("Colour.UnmarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(*tt.colour, tt.wantColour) {
+				t.Errorf("Colour.UnmarshalJSON() = %v, want %v", *tt.colour, tt.wantColour)
 			}
 		})
 	}
